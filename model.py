@@ -7,7 +7,7 @@ from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 from utils import AnswerPredictor
 
 # Load the model state dictionary
-model_state_dict = torch.load("./trained-model/pytorch_model.bin")
+model_state_dict = torch.load("./myModel/pytorch_model.bin", map_location=torch.device('cpu'))
 
 # Create an instance of the model using its class definition
 model = AutoModelForQuestionAnswering.from_pretrained("HooshvareLab/bert-fa-base-uncased", state_dict=model_state_dict)
@@ -17,7 +17,7 @@ tokenizer = AutoTokenizer.from_pretrained("HooshvareLab/bert-fa-base-uncased")
 
 df = pd.read_csv('./data/QA.csv')
 
-CONTEXT_LENGTH = 10
+CONTEXT_LENGTH = 5
 
 def getSimilarity(input_text):
     all_texts = df['question'].tolist()
@@ -48,9 +48,10 @@ def getContext(question):
 def getAnswer(question):
     context = getContext(question)
 	
-    predictor = AnswerPredictor(model, tokenizer, device="cpu", n_best=10)
+    predictor = AnswerPredictor(model, tokenizer, device="cpu", n_best=5)
     preds = predictor([question], [context] * 1, batch_size=1)
 
+    lt = []
     for k, v in preds.items():
-        return v
-
+         lt.append(v)
+    return lt
