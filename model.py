@@ -1,24 +1,56 @@
-import tensorflow as tf
-from tensorflow.keras.datasets import mnist
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Flatten, Dense
+import torch
+import random
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer
+from utils import AnswerPredictor
+
+# Load the model state dictionary
+model_state_dict = torch.load("./trained-model/pytorch_model.bin")
+
+# Create an instance of the model using its class definition
+model = AutoModelForQuestionAnswering.from_pretrained("HooshvareLab/bert-fa-base-uncased", state_dict=model_state_dict)
+
+# Optional: Load the tokenizer
+tokenizer = AutoTokenizer.from_pretrained("HooshvareLab/bert-fa-base-uncased")
+
+df = pd.read_csv('./data/QA.csv')
+
+CONTEXT_LENGTH = 10
+
+def getSimilarity(input_text):
+    all_texts = df['question'].tolist()
+    all_texts.append(input_text)
+
+    # Create TF-IDF vectorizer
+    tfidf_vectorizer = TfidfVectorizer(ngram_range=(1,3))
+
+    # Fit and transform the texts
+    tfidf_matrix = tfidf_vectorizer.fit_transform(all_texts)
+
+    # Calculate cosine similarity
+    cosine_similarities = cosine_similarity(tfidf_matrix[-1], tfidf_matrix[:-1]).flatten()
+
+    # Get the indices of the top 5 similar texts
+    top_indices = cosine_similarities.argsort()[-CONTEXT_LENGTH:][::-1]
+
+    # Retrieve the top 5 similar texts
+    top_ = df.iloc[0]['answer']
+    top_similar_texts = df.loc[top_indices, 'answer']
+    
+    return top_, top_similar_texts
+
+def getContext(question):
+    return '\n'.join(i for i in random.sample(getSimilarity(question)[1].to_list(), k=CONTEXT_LENGTH))
 
 
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-x_train, x_test = x_train / 255.0, x_test / 255.0
+def getAnswer(question):
+    context = getContext(question)
+	
+    predictor = AnswerPredictor(model, tokenizer, device="cpu", n_best=10)
+    preds = predictor([question], [context] * 1, batch_size=1)
 
+    for k, v in preds.items():
+        return v
 
-model = Sequential([
-    Flatten(input_shape=(28, 28)),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')
-])
-
-
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
-
-model.fit(x_train, y_train, epochs=5)
-
-model.save('mnist_model.h5')

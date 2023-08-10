@@ -1,3 +1,7 @@
 fastapi
 uvicorn
 tensorflow
+torch
+tqdm
+pandas
+scikit-learn
