@@ -3,17 +3,9 @@ import random
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 from utils import AnswerPredictor
 
-# Load the model state dictionary
-model_state_dict = torch.load("./pytorch_model.bin", map_location=torch.device('cpu'))
-
-# Create an instance of the model using its class definition
-model = AutoModelForQuestionAnswering.from_pretrained("HooshvareLab/bert-fa-base-uncased", state_dict=model_state_dict)
-
-# Optional: Load the tokenizer
-tokenizer = AutoTokenizer.from_pretrained("HooshvareLab/bert-fa-base-uncased")
+from base_models import model, tokenizer
 
 df = pd.read_csv('./data/QA.csv')
 
