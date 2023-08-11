@@ -2,9 +2,12 @@ from fastapi import FastAPI, Request
 import time
 import model
 
-app = FastAPI(
-    title='MLOps', debug=True,
-)
+global version 
+version = 'v1'
+global description
+description = 'start models'
+
+app = FastAPI(title='MLOps')
 
 @app.middleware("http")
 async def measure_execution_time(request: Request, call_next):
@@ -17,5 +20,22 @@ async def measure_execution_time(request: Request, call_next):
 
 
 @app.post("/question")
-async def create_item(question:str):
+def create_item(question:str):
+    print(question)
     return {'quesion': question, "answer": model.getAnswer(question)}
+
+@app.get('/version')
+def getVersion():
+    global version
+    return {'version': version}
+
+@app.put('/metadata')
+def setMetadata(metadata:str):
+    des = metadata['description']
+    ver = metadata['version']
+    global version
+    version = ver
+    global description
+    description = des    
+    return {'version': version, 'description': description}
+

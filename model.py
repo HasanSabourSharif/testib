@@ -47,10 +47,12 @@ def getContext(question):
 
 def getAnswer(question):
     context = getContext(question)
+    print(context)
 	
     predictor = AnswerPredictor(model, tokenizer, device="cpu", n_best=5)
     preds = predictor([question], [context] * 1, batch_size=1)
-
+    print(preds)
+    
     lt = []
     for k, v in preds.items():
          lt.append(v)
