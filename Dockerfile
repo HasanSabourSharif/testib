@@ -16,7 +16,7 @@ ENV TRANSFORMERS_CACHE=/app/dataset
 
 COPY . .
 RUN python3 base_models.py
-RUN mlflow ui
+
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
 
 # uvicorn main:app --host 0.0.0.0 --port 80
